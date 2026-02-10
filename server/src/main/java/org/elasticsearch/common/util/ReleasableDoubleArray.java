@@ -15,6 +15,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
+import java.nio.ByteOrder;
 
 class ReleasableDoubleArray implements DoubleArray {
     private static final long SHALLOW_SIZE = RamUsageEstimator.shallowSizeOfInstance(ReleasableDoubleArray.class);
@@ -41,7 +42,8 @@ class ReleasableDoubleArray implements DoubleArray {
             // We can't serialize messages longer than 2gb anyway
             throw new ArrayIndexOutOfBoundsException();
         }
-        return ref.getDoubleLE((int) index * Long.BYTES);
+        int offset = (int) index * Long.BYTES;
+        return ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN ? ref.getDoubleBE(offset) : ref.getDoubleLE(offset);
     }
 
     @Override

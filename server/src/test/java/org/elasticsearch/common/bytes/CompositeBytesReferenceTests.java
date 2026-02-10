@@ -230,4 +230,70 @@ public class CompositeBytesReferenceTests extends AbstractBytesReferenceTestCase
         assertThat(comp.getLongLE(16), equalTo(512L));
         expectThrows(IndexOutOfBoundsException.class, () -> comp.getLongLE(17));
     }
+
+    public void testGetIntBE() {
+        BytesReference[] refs = new BytesReference[] {
+            new BytesArray(new byte[] { 0x04, 0x03, 0x02, 0x01 }),
+            new BytesArray(new byte[] { 0x00, 0x12, 0x10, 0x12 }) };
+        BytesReference comp = CompositeBytesReference.of(refs);
+        assertThat(comp.getInt(0), equalTo(0x04030201));
+        assertThat(comp.getInt(1), equalTo(0x03020100));
+        assertThat(comp.getInt(2), equalTo(0x02010012));
+        assertThat(comp.getInt(3), equalTo(0x01001210));
+        assertThat(comp.getInt(4), equalTo(0x00121012));
+        // The jvm can optimize throwing ArrayIndexOutOfBoundsException by reusing the same exception,
+        // but these reused exceptions have no message or stack trace. This sometimes happens when running this test case.
+        // We can assert the exception message if -XX:-OmitStackTraceInFastThrow is set in gradle test task.
+        expectThrows(ArrayIndexOutOfBoundsException.class, () -> comp.getInt(5));
+    }
+
+    public void testGetDoubleBE() {
+        // first double = 1.2, second double = 1.4, third double = 1.6
+        // tag::noformat
+        byte[] data = new byte[] {
+            0x3F, -0xD, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33,
+            0x3F, -0xA, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+            0x3F, -0x7, -0x67, -0x67, -0x67, -0x67, -0x67, -0x66};
+        // end::noformat
+
+        List<BytesReference> refs = new ArrayList<>();
+        int bytesPerChunk = randomFrom(4, 16);
+        for (int offset = 0; offset < data.length; offset += bytesPerChunk) {
+            int length = Math.min(bytesPerChunk, data.length - offset);
+            refs.add(new BytesArray(data, offset, length));
+        }
+        BytesReference comp = CompositeBytesReference.of(refs.toArray(BytesReference[]::new));
+        assertThat(comp.getDoubleBE(0), equalTo(1.2));
+        assertThat(comp.getDoubleBE(8), equalTo(1.4));
+        assertThat(comp.getDoubleBE(16), equalTo(1.6));
+        // The jvm can optimize throwing ArrayIndexOutOfBoundsException by reusing the same exception,
+        // but these reused exceptions have no message or stack trace. This sometimes happens when running this test case.
+        // We can assert the exception message if -XX:-OmitStackTraceInFastThrow is set in gradle test task.
+        expectThrows(IndexOutOfBoundsException.class, () -> comp.getDoubleBE(17));
+    }
+
+    public void testGetLongBE() {
+        // first long = 2, second long = 44, third long = 512
+        // tag::noformat
+        byte[] data = new byte[] {
+            0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2,
+            0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2C,
+            0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2, 0x0};
+        // end::noformat
+
+        byte[] d = new byte[8];
+        ByteUtils.writeLongBE(2, d, 0);
+
+        List<BytesReference> refs = new ArrayList<>();
+        int bytesPerChunk = randomFrom(4, 16);
+        for (int offset = 0; offset < data.length; offset += bytesPerChunk) {
+            int length = Math.min(bytesPerChunk, data.length - offset);
+            refs.add(new BytesArray(data, offset, length));
+        }
+        BytesReference comp = CompositeBytesReference.of(refs.toArray(BytesReference[]::new));
+        assertThat(comp.getLongBE(0), equalTo(2L));
+        assertThat(comp.getLongBE(8), equalTo(44L));
+        assertThat(comp.getLongBE(16), equalTo(512L));
+        expectThrows(IndexOutOfBoundsException.class, () -> comp.getLongBE(17));
+    }
 }

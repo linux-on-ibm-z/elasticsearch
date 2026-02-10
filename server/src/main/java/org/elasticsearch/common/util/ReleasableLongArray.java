@@ -15,6 +15,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
+import java.nio.ByteOrder;
 
 public class ReleasableLongArray implements LongArray {
 
@@ -42,7 +43,8 @@ public class ReleasableLongArray implements LongArray {
             // We can't serialize messages longer than 2gb anyway
             throw new ArrayIndexOutOfBoundsException();
         }
-        return ref.getLongLE((int) index * Long.BYTES);
+        int offset = (int) index * Long.BYTES;
+        return ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN ? ref.getLongBE(offset) : ref.getLongLE(offset);
     }
 
     @Override

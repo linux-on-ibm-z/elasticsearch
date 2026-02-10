@@ -83,6 +83,16 @@ public enum ByteUtils {
     }
 
     /**
+     * Converts a byte array written in big endian format to a double.
+     *
+     * @param arr The byte array to read from in big endian layout
+     * @param offset The offset where in the array to read from
+     */
+    public static double readDoubleBE(byte[] arr, int offset) {
+        return Double.longBitsToDouble(readLongBE(arr, offset));
+    }
+
+    /**
      * Converts an int to a byte array in little endian format.
      *
      * @param val The int to convert to a byte array

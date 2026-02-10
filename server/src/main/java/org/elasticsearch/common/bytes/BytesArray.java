@@ -146,6 +146,21 @@ public final class BytesArray extends AbstractBytesReference {
     }
 
     @Override
+    public int getInt(int index) {
+        return ByteUtils.readIntBE(bytes, offset + index);
+   }
+
+    @Override
+    public long getLongBE(int index) {
+        return ByteUtils.readLongBE(bytes, offset + index);
+    }
+
+    @Override
+    public double getDoubleBE(int index) {
+        return ByteUtils.readDoubleBE(bytes, offset + index);
+    }
+
+    @Override
     public int getIntLE(int index) {
         return ByteUtils.readIntLE(bytes, offset + index);
     }

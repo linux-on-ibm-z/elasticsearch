@@ -127,6 +127,18 @@ public final class ReleasableBytesReference implements RefCounted, Releasable, B
     }
 
     @Override
+    public long getLongBE(int index) {
+        assert hasReferences();
+        return delegate.getLongBE(index);
+    }
+
+    @Override
+    public double getDoubleBE(int index) {
+        assert hasReferences();
+        return delegate.getDoubleBE(index);
+    }
+
+    @Override
     public int getIntLE(int index) {
         assert hasReferences();
         return delegate.getIntLE(index);

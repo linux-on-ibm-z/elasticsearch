@@ -15,6 +15,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
+import java.nio.ByteOrder;
 
 class ReleasableIntArray implements IntArray {
     private static final long SHALLOW_SIZE = RamUsageEstimator.shallowSizeOfInstance(ReleasableIntArray.class);
@@ -41,7 +42,8 @@ class ReleasableIntArray implements IntArray {
             // We can't serialize messages longer than 2gb anyway
             throw new ArrayIndexOutOfBoundsException();
         }
-        return ref.getIntLE((int) index * 4);
+        int offset = (int) index * 4;
+        return ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN ? ref.getInt(offset) : ref.getIntLE(offset);
     }
 
     @Override

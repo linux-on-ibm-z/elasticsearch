@@ -108,4 +108,47 @@ public class BytesArrayTests extends AbstractBytesReferenceTestCase {
         assertThat(e.getMessage(), equalTo("Index 9 out of bounds for length 9"));
     }
 
+    public void testGetIntBE() {
+        BytesReference ref = new BytesArray(new byte[] { 0x00, 0x01, 0x00, 0x12, 0x10, 0x12 }, 1, 5);
+        assertThat(ref.getInt(0), equalTo(0x01001210));
+        assertThat(ref.getInt(1), equalTo(0x00121012));
+        Exception e = expectThrows(ArrayIndexOutOfBoundsException.class, () -> ref.getInt(2));
+        assertThat(e.getMessage(), equalTo("Index 3 out of bounds for length 3"));
+        /*
+         * Wait. 3!? The array has length 6. Well, the var handle stuff
+         * for arrays just subtracts three - because that's one more than
+         * the number of bytes in an int. Get it? I'm not sure I do either....
+         */
+    }
+
+    public void testGetLongBE() {
+        // first 8 bytes = 888, second 8 bytes = Long.MAX_VALUE
+        // tag::noformat
+        byte[] array = new byte[] {
+            0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3, 0x78,
+            0x7F, -0x1, -0x1, -0x1, -0x1, -0x1, -0x1, -0x1
+        };
+        // end::noformat
+        BytesReference ref = new BytesArray(array, 0, array.length);
+        assertThat(ref.getLongBE(0), equalTo(888L));
+        assertThat(ref.getLongBE(8), equalTo(Long.MAX_VALUE));
+        Exception e = expectThrows(ArrayIndexOutOfBoundsException.class, () -> ref.getLongBE(9));
+        assertThat(e.getMessage(), equalTo("Index 9 out of bounds for length 9"));
+    }
+
+    public void testGetDoubleBE() {
+        // first 8 bytes = 1.2, second 8 bytes = 1.4
+        // tag::noformat
+        byte[] array = new byte[] {
+            0x3F, -0xD, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33,
+            0x3F, -0xA, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66
+        };
+        // end::noformat
+        BytesReference ref = new BytesArray(array, 0, array.length);
+        assertThat(ref.getDoubleBE(0), equalTo(1.2));
+        assertThat(ref.getDoubleBE(8), equalTo(1.4));
+        Exception e = expectThrows(ArrayIndexOutOfBoundsException.class, () -> ref.getDoubleBE(9));
+        assertThat(e.getMessage(), equalTo("Index 9 out of bounds for length 9"));
+    }
+
 }

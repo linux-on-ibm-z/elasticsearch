@@ -24,6 +24,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.nio.ByteOrder;
 
 public abstract class BlockConverter {
 
@@ -68,6 +69,29 @@ public abstract class BlockConverter {
         long write(RecyclerBytesStreamOutput out) throws IOException;
     }
 
+    @FunctionalInterface
+    interface DoubleWriter {
+        void write(RecyclerBytesStreamOutput out, double value) throws IOException;
+    }
+
+    @FunctionalInterface
+    interface IntWriter {
+        void write(RecyclerBytesStreamOutput out, int value) throws IOException;
+    }
+
+    @FunctionalInterface
+    interface LongWriter {
+        void write(RecyclerBytesStreamOutput out, long value) throws IOException;
+    }
+
+    private static final boolean BIG_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
+
+    private static final DoubleWriter DOUBLE_WRITER = BIG_ENDIAN ? RecyclerBytesStreamOutput::writeDouble : RecyclerBytesStreamOutput::writeDoubleLE;
+
+    private static final IntWriter INT_WRITER = BIG_ENDIAN ? RecyclerBytesStreamOutput::writeInt : RecyclerBytesStreamOutput::writeIntLE;
+
+    private static final LongWriter LONG_WRITER = BIG_ENDIAN ? RecyclerBytesStreamOutput::writeLong : RecyclerBytesStreamOutput::writeLongLE;
+
     /**
      * Convert a block into Arrow buffers.
      * @param block the ESQL block
@@ -104,7 +128,7 @@ public abstract class BlockConverter {
                 // TODO could we "just" get the memory of the array and dump it?
                 int count = BlockConverter.valueCount(block);
                 for (int i = 0; i < count; i++) {
-                    out.writeDoubleLE(block.getDouble(i));
+                     DOUBLE_WRITER.write(out, block.getDouble(i));
                 }
                 return (long) count * Double.BYTES;
             });
@@ -142,7 +166,7 @@ public abstract class BlockConverter {
                 // TODO could we "just" get the memory of the array and dump it?
                 int count = BlockConverter.valueCount(block);
                 for (int i = 0; i < count; i++) {
-                    out.writeIntLE(block.getInt(i));
+                    INT_WRITER.write(out, block.getInt(i));
                 }
                 return (long) count * Integer.BYTES;
             });
@@ -183,7 +207,7 @@ public abstract class BlockConverter {
                 // TODO could we "just" get the memory of the array and dump it?
                 int count = BlockConverter.valueCount(block);
                 for (int i = 0; i < count; i++) {
-                    out.writeLongLE(block.getLong(i));
+                    LONG_WRITER.write(out, block.getLong(i));
                 }
                 return (long) count * Long.BYTES;
             });
@@ -260,7 +284,7 @@ public abstract class BlockConverter {
                 if (block.areAllValuesNull()) {
                     var count = valueCount(block) + 1;
                     for (int i = 0; i < count; i++) {
-                        out.writeIntLE(0);
+                        INT_WRITER.write(out, 0);
                     }
                     return offsetvectorByteSize(block);
                 }
@@ -269,14 +293,14 @@ public abstract class BlockConverter {
                 BytesRef scratch = new BytesRef();
                 int offset = 0;
                 for (int i = 0; i < valueCount(block); i++) {
-                    out.writeIntLE(offset);
+                    INT_WRITER.write(out, offset);
                     // FIXME: add a ByteRefsVector.getLength(position): there are some cases
                     // where getBytesRef will allocate, which isn't needed here.
                     BytesRef v = block.getBytesRef(i, scratch);
 
                     offset += v.length;
                 }
-                out.writeIntLE(offset);
+                INT_WRITER.write(out, offset);
                 return offsetvectorByteSize(block);
             });
 
@@ -524,11 +548,11 @@ public abstract class BlockConverter {
                 // '<=' is intentional to write the end position of the last item
                 for (int i = 0; i <= block.getPositionCount(); i++) {
                     // TODO could we get the block's firstValueIndexes and dump it?
-                    out.writeIntLE(block.getFirstValueIndex(i));
+                    INT_WRITER.write(out, block.getFirstValueIndex(i));
                 }
             } else {
                 for (int i = 0; i <= block.getPositionCount(); i++) {
-                    out.writeIntLE(i);
+                    INT_WRITER.write(out, i);
                 }
             }
 
