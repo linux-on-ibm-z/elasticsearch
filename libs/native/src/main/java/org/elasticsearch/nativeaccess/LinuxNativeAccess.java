@@ -83,7 +83,9 @@ public class LinuxNativeAccess extends PosixNativeAccess {
             "amd64",
             new Arch(0xC000003E, 0x3FFFFFFF, 57, 58, 59, 322, 317),
             "aarch64",
-            new Arch(0xC00000B7, 0xFFFFFFFF, 1079, 1071, 221, 281, 277)
+            new Arch(0xC00000B7, 0xFFFFFFFF, 1079, 1071, 221, 281, 277),
+            "s390x",
+            new Arch(0x80000016, 0x3FFFFFFF, 2, 190, 11, 354, 348)
         );
     }
 
@@ -91,7 +93,7 @@ public class LinuxNativeAccess extends PosixNativeAccess {
     private final Systemd systemd;
 
     LinuxNativeAccess(NativeLibraryProvider libraryProvider) {
-        super("Linux", libraryProvider, new PosixConstants(-1L, 9, 1, 8, 64, 144, 48, 64));
+        super("Linux", libraryProvider, new PosixConstants(-1L, 9, 1, 8, 64, 144, 48, (System.getProperty("os.arch").equals("s390x") ? 112 : 644)));
         this.linuxLibc = libraryProvider.getLibrary(LinuxCLibrary.class);
         String socketPath = System.getenv("NOTIFY_SOCKET");
         if (socketPath == null) {

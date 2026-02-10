@@ -46,6 +46,8 @@ public class LoaderHelper {
             arch = "x64";
         } else if (archname.equals("aarch64")) {
             arch = archname;
+        } else if (archname.equals("s390x")) {
+            arch = archname;
         } else {
             arch = "unsupported_arch[" + archname + "]";
         }
